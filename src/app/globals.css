@@ -1,26 +1,52 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  /* Luxe Modern Obsidian & Saffron palette */
+  --color-obsidian: #0f0f11;
+  --color-obsidian-soft: #151518;
+  --color-obsidian-card: #1a1a1f;
+  --color-saffron: #d97706;
+  --color-saffron-bright: #f59e0b;
+  --color-saffron-glow: #fbbf24;
+  --color-emerald-deep: #15803d;
+  --color-emerald-soft: #34d399;
+  --color-crimson: #dc2626;
+  --color-cream: #fafaf9;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-obsidian);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+/* Anchored sections clear the fixed glassmorphic navbar */
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+::selection {
+  background-color: var(--color-saffron);
+  color: var(--color-obsidian);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-saffron-bright);
+  outline-offset: 2px;
 }
