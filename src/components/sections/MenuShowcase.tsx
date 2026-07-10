@@ -7,7 +7,47 @@ import { ExternalLink, Star } from "lucide-react";
 
 import { RESTAURANT_DATA, type PricedItem } from "@/data/restaurantData";
 import SectionHeading from "@/components/SectionHeading";
+import MotionSlider from "@/components/MotionSlider";
 import { cn } from "@/lib/utils";
+
+interface SignatureDish extends PricedItem {
+  photo: string;
+  sectionName: string;
+}
+
+function SignatureCard({ dish }: { dish: SignatureDish }) {
+  return (
+    <figure className="group relative h-64 w-64 shrink-0 overflow-hidden rounded-3xl border border-white/8 bg-obsidian-card sm:h-72 sm:w-72">
+      <Image
+        src={dish.photo}
+        alt={dish.name}
+        fill
+        sizes="288px"
+        draggable={false}
+        className="pointer-events-none select-none object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-obsidian/20 to-transparent"
+      />
+      <figcaption className="absolute inset-x-0 bottom-0 p-5">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-saffron-glow">
+          {dish.sectionName}
+        </p>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="font-display text-lg leading-tight text-cream">
+            {dish.name}
+          </span>
+          {dish.price && (
+            <span className="shrink-0 text-sm font-medium tabular-nums text-stone-300">
+              {dish.price}
+            </span>
+          )}
+        </div>
+      </figcaption>
+    </figure>
+  );
+}
 
 function MenuRow({ item }: { item: PricedItem }) {
   return (
@@ -66,6 +106,14 @@ export default function MenuShowcase() {
   const midpoint = Math.ceil(active.items.length / 2);
   const columns = [active.items.slice(0, midpoint), active.items.slice(midpoint)];
 
+  const signatureDishes: SignatureDish[] = sections.flatMap((section) =>
+    section.items
+      .filter((item): item is PricedItem & { photo: string } =>
+        Boolean(item.photo)
+      )
+      .map((item) => ({ ...item, sectionName: section.name }))
+  );
+
   return (
     <section id="menu" className="relative overflow-hidden py-20 md:py-28">
       <div
@@ -79,7 +127,21 @@ export default function MenuShowcase() {
           title="The Full Menu"
           description="Ground-from-scratch spices, overnight-simmered lentils, and breads baked to order — every dish adjusted to your palate."
         />
+      </div>
 
+      {/* Signature dishes slider */}
+      <MotionSlider
+        label="Signature dishes"
+        speed={24}
+        step={300}
+        className="mb-14"
+      >
+        {signatureDishes.map((dish) => (
+          <SignatureCard key={dish.name} dish={dish} />
+        ))}
+      </MotionSlider>
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Category tabs with sliding indicator */}
         <div
           role="tablist"
