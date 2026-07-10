@@ -1,7 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import {
+  Inter,
+  Noto_Sans_JP,
+  Noto_Serif_JP,
+  Playfair_Display,
+} from "next/font/google";
 
 import { RESTAURANT_DATA } from "@/data/restaurantData";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollManager from "@/components/ScrollManager";
@@ -19,6 +25,18 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
+const notoSansJp = Noto_Sans_JP({
+  variable: "--font-noto-sans-jp",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const notoSerifJp = Noto_Serif_JP({
+  variable: "--font-noto-serif-jp",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 const { metadata: brand } = RESTAURANT_DATA;
 
 export const metadata: Metadata = {
@@ -26,13 +44,14 @@ export const metadata: Metadata = {
     default: `${brand.brandName} | ${brand.subTitle}`,
     template: `%s | ${brand.brandName} Kyoto`,
   },
-  description: brand.description,
+  description: brand.description.en,
   keywords: brand.seoKeywords,
   openGraph: {
     title: `${brand.brandName} | ${brand.subTitle}`,
-    description: brand.tagline,
+    description: brand.tagline.en,
     type: "website",
     locale: "en_US",
+    alternateLocale: "ja_JP",
     siteName: brand.legalName,
   },
 };
@@ -50,13 +69,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${playfair.variable} h-full antialiased`}
+      className={`${inter.variable} ${playfair.variable} ${notoSansJp.variable} ${notoSerifJp.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-obsidian text-cream">
-        <ScrollManager />
-        <Navbar />
-        {children}
-        <Footer />
+        <LanguageProvider>
+          <ScrollManager />
+          <Navbar />
+          {children}
+          <Footer />
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -10,23 +10,71 @@ import {
 import { CalendarCheck, Menu, Phone, X } from "lucide-react";
 
 import { RESTAURANT_DATA } from "@/data/restaurantData";
+import { UI, type Lang } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 import { buttonVariants } from "@/components/ui/button";
-import { cn, scrollToSection } from "@/lib/utils";
+import { buildBookingUrl, cn, scrollToSection } from "@/lib/utils";
 
-const NAV_LINKS = [
-  { id: "story", label: "Our Story" },
-  { id: "menu", label: "Menu" },
-  { id: "gallery", label: "Gallery" },
-  { id: "reviews", label: "Reviews" },
-  { id: "visit", label: "Visit Us" },
-] as const;
+const NAV_IDS = ["story", "menu", "gallery", "reviews", "visit"] as const;
+
+const LANGS: { code: Lang; label: string }[] = [
+  { code: "en", label: "EN" },
+  { code: "ja", label: "日本語" },
+];
+
+function LangToggle({ className }: { className?: string }) {
+  const { lang, setLang } = useLang();
+  return (
+    <div
+      role="group"
+      aria-label="Language"
+      className={cn(
+        "flex items-center rounded-full border border-white/10 bg-white/5 p-0.5",
+        className
+      )}
+    >
+      {LANGS.map(({ code, label }) => (
+        <button
+          key={code}
+          type="button"
+          aria-pressed={lang === code}
+          onClick={() => setLang(code)}
+          className={cn(
+            "relative cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+            lang === code
+              ? "text-obsidian"
+              : "text-stone-400 hover:text-cream"
+          )}
+        >
+          {lang === code && (
+            <motion.span
+              layoutId="lang-pill"
+              className="absolute inset-0 rounded-full bg-saffron"
+              transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            />
+          )}
+          <span className="relative z-10">{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function Navbar() {
   const { metadata, contact } = RESTAURANT_DATA;
+  const { lang, t } = useLang();
   const [scrolled, setScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  // Computed post-mount so the visit date (tomorrow) never causes a hydration mismatch.
+  const [bookingUrl, setBookingUrl] = useState(
+    "https://tabelog.com/en/booking/form_course/new?member=2&rcd=26043494"
+  );
   const { scrollY } = useScroll();
+
+  useEffect(() => {
+    setBookingUrl(buildBookingUrl(lang));
+  }, [lang]);
 
   useMotionValueEvent(scrollY, "change", (y) => {
     setScrolled(y > 16);
@@ -35,9 +83,9 @@ export default function Navbar() {
 
   // Scroll-spy: highlight the nav link of the section currently in view.
   useEffect(() => {
-    const sections = NAV_LINKS.map(({ id }) =>
-      document.getElementById(id)
-    ).filter((el): el is HTMLElement => el !== null);
+    const sections = NAV_IDS.map((id) => document.getElementById(id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -88,15 +136,15 @@ export default function Navbar() {
               {metadata.brandName}
             </span>
             <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.32em] text-saffron-bright">
-              Restaurant &amp; Bar · Kyoto
+              {t(UI.nav.brandSub)}
             </span>
           </a>
 
           {/* Desktop links with sliding active pill */}
           <ul className="hidden items-center gap-1 lg:flex">
-            {NAV_LINKS.map((link) => (
-              <li key={link.id} className="relative">
-                {activeId === link.id && (
+            {NAV_IDS.map((id) => (
+              <li key={id} className="relative">
+                {activeId === id && (
                   <motion.span
                     layoutId="nav-active-pill"
                     className="absolute inset-0 rounded-full bg-white/8"
@@ -104,19 +152,19 @@ export default function Navbar() {
                   />
                 )}
                 <a
-                  href={`#${link.id}`}
+                  href={`#${id}`}
                   onClick={(event) => {
                     event.preventDefault();
-                    scrollToSection(link.id);
+                    scrollToSection(id);
                   }}
                   className={cn(
                     "relative z-10 block rounded-full px-4 py-2 text-sm transition-colors",
-                    activeId === link.id
+                    activeId === id
                       ? "text-cream"
                       : "text-stone-400 hover:text-cream"
                   )}
                 >
-                  {link.label}
+                  {t(UI.nav[id])}
                 </a>
               </li>
             ))}
@@ -124,6 +172,7 @@ export default function Navbar() {
 
           {/* Desktop actions */}
           <div className="hidden items-center gap-2 lg:flex">
+            <LangToggle />
             <a
               href={contact.phone.dial}
               className={buttonVariants({ variant: "ghost", size: "sm" })}
@@ -132,27 +181,32 @@ export default function Navbar() {
               <span className="tabular-nums">{contact.phone.display}</span>
             </a>
             <motion.a
-              href={contact.phone.dial}
+              href={bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               <CalendarCheck aria-hidden="true" />
-              Reserve a Table
+              {t(UI.nav.reserve)}
             </motion.a>
           </div>
 
-          {/* Mobile toggle */}
-          <button
-            type="button"
-            aria-expanded={open}
-            aria-controls="mobile-menu"
-            aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => setOpen((v) => !v)}
-            className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-cream transition-colors hover:border-saffron/50 lg:hidden"
-          >
-            {open ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          {/* Mobile: language toggle + menu button */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <LangToggle />
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls="mobile-menu"
+              aria-label={open ? "Close menu" : "Open menu"}
+              onClick={() => setOpen((v) => !v)}
+              className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-cream transition-colors hover:border-saffron/50"
+            >
+              {open ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </nav>
 
         {/* Mobile sheet */}
@@ -167,30 +221,30 @@ export default function Navbar() {
               className="overflow-hidden border-t border-white/10 bg-obsidian/95 backdrop-blur-xl lg:hidden"
             >
               <ul className="space-y-1 px-4 py-5">
-                {NAV_LINKS.map((link, index) => (
+                {NAV_IDS.map((id, index) => (
                   <motion.li
-                    key={link.id}
+                    key={id}
                     initial={{ opacity: 0, x: -12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.05 + index * 0.05 }}
                   >
                     <a
-                      href={`#${link.id}`}
+                      href={`#${id}`}
                       onClick={(event) => {
                         event.preventDefault();
                         setOpen(false);
-                        scrollToSection(link.id);
+                        scrollToSection(id);
                       }}
                       className="block rounded-xl px-4 py-3 text-base text-stone-300 transition-colors hover:bg-white/5 hover:text-cream"
                     >
-                      {link.label}
+                      {t(UI.nav[id])}
                     </a>
                   </motion.li>
                 ))}
                 <motion.li
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 + NAV_LINKS.length * 0.05 }}
+                  transition={{ delay: 0.05 + NAV_IDS.length * 0.05 }}
                   className="flex flex-col gap-2 pt-3 sm:flex-row"
                 >
                   <a
@@ -201,17 +255,20 @@ export default function Navbar() {
                     )}
                   >
                     <Phone aria-hidden="true" />
-                    Call Now
+                    {t(UI.nav.callNow)}
                   </a>
                   <a
-                    href={contact.phone.dial}
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
                     className={cn(
                       buttonVariants({ variant: "primary", size: "md" }),
                       "flex-1"
                     )}
                   >
                     <CalendarCheck aria-hidden="true" />
-                    Reserve a Table
+                    {t(UI.nav.reserve)}
                   </a>
                 </motion.li>
               </ul>

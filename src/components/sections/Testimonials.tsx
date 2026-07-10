@@ -10,6 +10,8 @@ import {
 import { Quote, Star } from "lucide-react";
 
 import { RESTAURANT_DATA, type Testimonial } from "@/data/restaurantData";
+import { UI } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 import SectionHeading from "@/components/SectionHeading";
 
 const MARQUEE_SPEED = 38; // px per second
@@ -37,6 +39,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+  const { t } = useLang();
   return (
     <figure className="relative flex h-full w-[min(420px,82vw)] shrink-0 flex-col gap-4 overflow-hidden rounded-2xl border border-white/8 bg-obsidian-card p-7">
       <Quote
@@ -45,11 +48,11 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
       />
       <StarRating rating={testimonial.rating} />
       <blockquote className="flex-1 text-sm leading-relaxed text-stone-300">
-        “{testimonial.quote}”
+        “{t(testimonial.quote)}”
       </blockquote>
       <figcaption>
-        <p className="font-medium text-cream">{testimonial.author}</p>
-        <p className="mt-0.5 text-xs text-stone-500">{testimonial.context}</p>
+        <p className="font-medium text-cream">{t(testimonial.author)}</p>
+        <p className="mt-0.5 text-xs text-stone-500">{t(testimonial.context)}</p>
       </figcaption>
     </figure>
   );
@@ -105,15 +108,16 @@ function Marquee({ testimonials }: { testimonials: Testimonial[] }) {
 
 export default function Testimonials() {
   const { testimonials } = RESTAURANT_DATA;
+  const { t } = useLang();
   const reduceMotion = useReducedMotion();
 
   return (
     <section id="reviews" className="bg-obsidian-soft py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Guest Stories"
-          title="Loved by Travelers From Around the World"
-          description="Real words from real guests — rated 5.0 by diners who found their way up to the fourth floor."
+          eyebrow={t(UI.reviews.eyebrow)}
+          title={t(UI.reviews.title)}
+          description={t(UI.reviews.description)}
         />
       </div>
 

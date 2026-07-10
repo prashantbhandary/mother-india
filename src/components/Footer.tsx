@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Banknote,
+  CalendarCheck,
   Check,
   Clock,
   Copy,
@@ -14,10 +15,12 @@ import {
 } from "lucide-react";
 
 import { RESTAURANT_DATA } from "@/data/restaurantData";
+import { UI } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 import SectionHeading from "@/components/SectionHeading";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn, scrollToSection } from "@/lib/utils";
+import { buildBookingUrl, cn, scrollToSection } from "@/lib/utils";
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -26,9 +29,20 @@ const fadeUp = {
   transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
 };
 
+const NAV_IDS = ["story", "menu", "gallery", "reviews", "visit"] as const;
+
 export default function Footer() {
   const { metadata, contact, paymentMethods } = RESTAURANT_DATA;
+  const { lang, t } = useLang();
   const [copied, setCopied] = useState(false);
+  // Computed post-mount so the visit date (tomorrow) never causes a hydration mismatch.
+  const [bookingUrl, setBookingUrl] = useState(
+    "https://tabelog.com/en/booking/form_course/new?member=2&rcd=26043494"
+  );
+
+  useEffect(() => {
+    setBookingUrl(buildBookingUrl(lang));
+  }, [lang]);
 
   const copyJapaneseAddress = async () => {
     try {
@@ -45,9 +59,9 @@ export default function Footer() {
       {/* Visit / Map block */}
       <section id="visit" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28 lg:px-8">
         <SectionHeading
-          eyebrow="Visit Us"
-          title="Find Us in Nakagyo Ward"
-          description={contact.address.accessHint}
+          eyebrow={t(UI.visit.eyebrow)}
+          title={t(UI.visit.title)}
+          description={t(contact.address.accessHint)}
         />
 
         <div className="grid gap-8 lg:grid-cols-2">
@@ -61,7 +75,9 @@ export default function Footer() {
                 <MapPin className="size-5 text-saffron-bright" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <h3 className="font-display text-lg text-cream">Address</h3>
+                <h3 className="font-display text-lg text-cream">
+                  {t(UI.visit.address)}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-stone-300">
                   {contact.address.english}
                 </p>
@@ -82,7 +98,7 @@ export default function Footer() {
                     ) : (
                       <Copy aria-hidden="true" />
                     )}
-                    {copied ? "Copied!" : "Copy Japanese address"}
+                    {copied ? t(UI.visit.copied) : t(UI.visit.copyAddress)}
                   </button>
                   <a
                     href={metadata.gMapsLink}
@@ -91,12 +107,10 @@ export default function Footer() {
                     className={buttonVariants({ variant: "ghost", size: "sm" })}
                   >
                     <ExternalLink aria-hidden="true" />
-                    Open in Google Maps
+                    {t(UI.visit.openMaps)}
                   </a>
                 </div>
-                <p className="mt-3 text-xs text-stone-500">
-                  Tip: copy the Japanese address and show it to your taxi driver.
-                </p>
+                <p className="mt-3 text-xs text-stone-500">{t(UI.visit.taxiTip)}</p>
               </div>
             </div>
 
@@ -105,16 +119,18 @@ export default function Footer() {
                 <Clock className="size-5 text-emerald-soft" aria-hidden="true" />
               </span>
               <div>
-                <h3 className="font-display text-lg text-cream">Opening Hours</h3>
+                <h3 className="font-display text-lg text-cream">
+                  {t(UI.visit.hours)}
+                </h3>
                 {contact.hours.schedule.map((entry) => (
-                  <p key={entry.days} className="mt-2 text-sm text-stone-300">
-                    <span className="font-medium text-cream">{entry.days}</span>
+                  <p key={entry.days.en} className="mt-2 text-sm text-stone-300">
+                    <span className="font-medium text-cream">{t(entry.days)}</span>
                     <span className="mx-2 text-stone-600">·</span>
                     <span className="tabular-nums">{entry.time}</span>
                   </p>
                 ))}
                 <p className="mt-2 text-xs leading-relaxed text-stone-500">
-                  {contact.hours.note}
+                  {t(contact.hours.note)}
                 </p>
               </div>
             </div>
@@ -124,26 +140,39 @@ export default function Footer() {
                 <Phone className="size-5 text-saffron-bright" aria-hidden="true" />
               </span>
               <div>
-                <h3 className="font-display text-lg text-cream">Reservations</h3>
+                <h3 className="font-display text-lg text-cream">
+                  {t(UI.visit.reservations)}
+                </h3>
                 <a
                   href={contact.phone.dial}
                   className="mt-2 inline-block text-lg font-semibold tabular-nums text-saffron-glow transition-colors hover:text-saffron-bright"
                 >
                   {contact.phone.display}
                 </a>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-3">
+                  <a
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonVariants({ variant: "primary", size: "sm" })}
+                  >
+                    <CalendarCheck aria-hidden="true" />
+                    {t(UI.visit.bookOnline)}
+                  </a>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
                   <span className="flex items-center gap-1.5 text-xs text-stone-400">
                     <CreditCard className="size-3.5" aria-hidden="true" />
                     <Banknote className="size-3.5" aria-hidden="true" />
                   </span>
                   {paymentMethods.modes.map((mode) => (
-                    <Badge key={mode} tone="neutral">
-                      {mode}
+                    <Badge key={mode.en} tone="neutral">
+                      {t(mode)}
                     </Badge>
                   ))}
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-stone-500">
-                  {paymentMethods.note}
+                  {t(paymentMethods.note)}
                 </p>
               </div>
             </div>
@@ -179,32 +208,26 @@ export default function Footer() {
 
           <div className="flex flex-col items-center gap-3">
             <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              {[
-                { href: "#story", label: "Our Story" },
-                { href: "#menu", label: "Menu" },
-                { href: "#gallery", label: "Gallery" },
-                { href: "#reviews", label: "Reviews" },
-                { href: "#visit", label: "Visit Us" },
-              ].map((link) => (
-                <li key={link.href}>
+              {NAV_IDS.map((id) => (
+                <li key={id}>
                   <a
-                    href={link.href}
+                    href={`#${id}`}
                     onClick={(event) => {
                       event.preventDefault();
-                      scrollToSection(link.href.slice(1));
+                      scrollToSection(id);
                     }}
                     className="text-sm text-stone-400 transition-colors hover:text-saffron-glow"
                   >
-                    {link.label}
+                    {t(UI.nav[id])}
                   </a>
                 </li>
               ))}
             </ul>
             <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
               {[
-                { href: metadata.tabelogUrl, label: "Tabelog" },
-                { href: metadata.tabelogMenuUrl, label: "Menu on Tabelog" },
-                { href: metadata.gMapsLink, label: "Google Maps" },
+                { href: metadata.tabelogUrl, label: t(UI.visit.tabelog) },
+                { href: metadata.tabelogMenuUrl, label: t(UI.visit.tabelogMenu) },
+                { href: metadata.gMapsLink, label: t(UI.visit.googleMaps) },
               ].map((link) => (
                 <li key={link.href}>
                   <a
@@ -223,7 +246,7 @@ export default function Footer() {
 
           <p className="text-center text-xs leading-relaxed text-stone-500 md:text-right">
             © {new Date().getFullYear()} {metadata.legalName}
-            <span className="block">Crafted with warmth in Kyoto</span>
+            <span className="block">{t(UI.visit.crafted)}</span>
           </p>
         </div>
       </div>

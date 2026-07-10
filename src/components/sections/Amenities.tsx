@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 
 import { RESTAURANT_DATA, type AmenityIcon } from "@/data/restaurantData";
+import { UI } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 import SectionHeading from "@/components/SectionHeading";
 
 const AMENITY_ICONS: Record<AmenityIcon, LucideIcon> = {
@@ -43,14 +45,15 @@ const item = {
 
 export default function Amenities() {
   const { amenities } = RESTAURANT_DATA;
+  const { t } = useLang();
 
   return (
     <section id="amenities" className="bg-obsidian-soft py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Everything You Need"
-          title="Thoughtful Comforts, Warm Hospitality"
-          description="From dedicated Jain preparation to family-friendly seating, every detail is designed around your comfort."
+          eyebrow={t(UI.amenities.eyebrow)}
+          title={t(UI.amenities.title)}
+          description={t(UI.amenities.description)}
         />
 
         <motion.ul
@@ -63,7 +66,7 @@ export default function Amenities() {
           {amenities.map((amenity) => {
             const Icon = AMENITY_ICONS[amenity.icon];
             return (
-              <motion.li key={amenity.label} variants={item}>
+              <motion.li key={amenity.label.en} variants={item}>
                 <motion.div
                   whileHover={{ y: -6 }}
                   transition={{ type: "spring", stiffness: 320, damping: 22 }}
@@ -73,7 +76,7 @@ export default function Amenities() {
                     <Icon className="size-6 text-saffron-bright" aria-hidden="true" />
                   </span>
                   <span className="text-sm font-medium leading-snug text-stone-200">
-                    {amenity.label}
+                    {t(amenity.label)}
                   </span>
                 </motion.div>
               </motion.li>

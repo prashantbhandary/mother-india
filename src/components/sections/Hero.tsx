@@ -11,6 +11,8 @@ import {
 import { ChevronDown, Clock, MapPin, Phone, UtensilsCrossed } from "lucide-react";
 
 import { RESTAURANT_DATA } from "@/data/restaurantData";
+import { UI } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 import { buttonVariants } from "@/components/ui/button";
 import { cn, scrollToSection } from "@/lib/utils";
 
@@ -18,6 +20,7 @@ const easeOut = [0.22, 1, 0.36, 1] as const;
 
 export default function Hero() {
   const { metadata, contact } = RESTAURANT_DATA;
+  const { lang, t } = useLang();
   const reduceMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -30,7 +33,11 @@ export default function Hero() {
   const backgroundScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
-  const taglineWords = metadata.tagline.split(" ");
+  // Japanese has no spaces — reveal by character instead of by word.
+  const tagline = t(metadata.tagline);
+  const units = lang === "ja" ? Array.from(tagline) : tagline.split(" ");
+  const unitDelay = lang === "ja" ? 0.03 : 0.05;
+
   const hours = contact.hours.schedule[0];
 
   return (
@@ -51,7 +58,7 @@ export default function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-30 blur-[2px]"
+          className="object-cover opacity-35 blur-[2px]"
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(217,119,6,0.22),transparent_55%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(21,128,61,0.15),transparent_55%)]" />
@@ -74,7 +81,8 @@ export default function Hero() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-soft/60 motion-reduce:hidden" />
               <span className="relative inline-flex size-2 rounded-full bg-emerald-soft" />
             </span>
-            Open Daily · <span className="tabular-nums">{hours.time}</span>
+            {t(UI.hero.openDaily)} ·{" "}
+            <span className="tabular-nums">{hours.time}</span>
           </motion.div>
 
           {/* Brand title */}
@@ -99,11 +107,14 @@ export default function Hero() {
             </span>
           </motion.h1>
 
-          {/* Tagline — word-by-word clip reveal */}
-          <h2 className="mx-auto mt-6 max-w-3xl font-display text-xl italic leading-relaxed text-stone-200 sm:text-2xl md:text-3xl">
-            {taglineWords.map((word, index) => (
+          {/* Tagline — word/character clip reveal */}
+          <h2
+            key={lang}
+            className="mx-auto mt-6 max-w-3xl font-display text-xl italic leading-relaxed text-stone-200 sm:text-2xl md:text-3xl"
+          >
+            {units.map((unit, index) => (
               <span
-                key={`${word}-${index}`}
+                key={`${unit}-${index}`}
                 className="inline-block overflow-hidden pb-1 align-bottom"
               >
                 <motion.span
@@ -111,13 +122,13 @@ export default function Hero() {
                   initial={reduceMotion ? false : { y: "110%" }}
                   animate={{ y: 0 }}
                   transition={{
-                    delay: 0.55 + index * 0.05,
+                    delay: 0.55 + index * unitDelay,
                     duration: 0.55,
                     ease: easeOut,
                   }}
                 >
-                  {word}
-                  {index < taglineWords.length - 1 ? " " : ""}
+                  {unit}
+                  {lang !== "ja" && index < units.length - 1 ? " " : ""}
                 </motion.span>
               </span>
             ))}
@@ -129,7 +140,7 @@ export default function Hero() {
             transition={{ delay: 1.05, duration: 0.6, ease: easeOut }}
             className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-stone-400 sm:text-base"
           >
-            {metadata.description}
+            {t(metadata.description)}
           </motion.p>
 
           {/* CTAs */}
@@ -150,7 +161,7 @@ export default function Hero() {
               className={cn(buttonVariants({ variant: "primary", size: "lg" }), "w-full sm:w-auto")}
             >
               <UtensilsCrossed aria-hidden="true" />
-              Explore Our Menu
+              {t(UI.hero.explore)}
             </motion.a>
             <motion.a
               href={contact.phone.dial}
@@ -172,11 +183,11 @@ export default function Hero() {
           >
             <span className="flex items-center gap-2">
               <MapPin className="size-4 text-saffron-bright" aria-hidden="true" />
-              4F Hijikata Bldg. · Nakagyo Ward
+              {t(UI.hero.location)}
             </span>
             <span className="flex items-center gap-2">
               <Clock className="size-4 text-saffron-bright" aria-hidden="true" />
-              {hours.days} · <span className="tabular-nums">{hours.time}</span>
+              {t(hours.days)} · <span className="tabular-nums">{hours.time}</span>
             </span>
           </motion.div>
         </div>
@@ -185,7 +196,7 @@ export default function Hero() {
       {/* Scroll cue */}
       <motion.a
         href="#story"
-        aria-label="Scroll to our story"
+        aria-label={t(UI.hero.scrollLabel)}
         onClick={(event) => {
           event.preventDefault();
           scrollToSection("story");

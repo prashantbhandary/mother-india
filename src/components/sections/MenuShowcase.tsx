@@ -6,21 +6,25 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, Star } from "lucide-react";
 
 import { RESTAURANT_DATA, type PricedItem } from "@/data/restaurantData";
+import { UI } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 import SectionHeading from "@/components/SectionHeading";
 import MotionSlider from "@/components/MotionSlider";
 import { cn } from "@/lib/utils";
 
-interface SignatureDish extends PricedItem {
-  photo: string;
+function SignatureCard({
+  dish,
+  sectionName,
+}: {
+  dish: PricedItem & { photo: string };
   sectionName: string;
-}
-
-function SignatureCard({ dish }: { dish: SignatureDish }) {
+}) {
+  const { t } = useLang();
   return (
     <figure className="group relative h-64 w-64 shrink-0 overflow-hidden rounded-3xl border border-white/8 bg-obsidian-card sm:h-72 sm:w-72">
       <Image
         src={dish.photo}
-        alt={dish.name}
+        alt={t(dish.name)}
         fill
         sizes="288px"
         draggable={false}
@@ -32,11 +36,11 @@ function SignatureCard({ dish }: { dish: SignatureDish }) {
       />
       <figcaption className="absolute inset-x-0 bottom-0 p-5">
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-saffron-glow">
-          {dish.sectionName}
+          {sectionName}
         </p>
         <div className="flex items-baseline justify-between gap-3">
           <span className="font-display text-lg leading-tight text-cream">
-            {dish.name}
+            {t(dish.name)}
           </span>
           {dish.price && (
             <span className="shrink-0 text-sm font-medium tabular-nums text-stone-300">
@@ -50,12 +54,13 @@ function SignatureCard({ dish }: { dish: SignatureDish }) {
 }
 
 function MenuRow({ item }: { item: PricedItem }) {
+  const { t } = useLang();
   return (
     <li className="flex items-start gap-4 border-b border-white/5 py-3.5">
       {item.photo && (
         <Image
           src={item.photo}
-          alt={item.name}
+          alt={t(item.name)}
           width={64}
           height={64}
           className="size-16 shrink-0 rounded-xl border border-white/10 object-cover"
@@ -69,11 +74,11 @@ function MenuRow({ item }: { item: PricedItem }) {
               item.recommended ? "text-saffron-glow" : "text-cream"
             )}
           >
-            {item.name}
+            {t(item.name)}
             {item.recommended && (
               <Star
                 className="size-3.5 shrink-0 fill-saffron-bright text-saffron-bright"
-                aria-label="House recommendation"
+                aria-label={t(UI.menu.recommendedLabel)}
               />
             )}
           </h4>
@@ -89,7 +94,7 @@ function MenuRow({ item }: { item: PricedItem }) {
         </div>
         {item.description && (
           <p className="mt-1 pr-2 text-xs leading-relaxed text-stone-500">
-            {item.description}
+            {t(item.description)}
           </p>
         )}
       </div>
@@ -100,18 +105,19 @@ function MenuRow({ item }: { item: PricedItem }) {
 export default function MenuShowcase() {
   const { fullMenu, metadata } = RESTAURANT_DATA;
   const { sections, curryChoices } = fullMenu;
+  const { t } = useLang();
   const [activeId, setActiveId] = useState(sections[0].id);
 
   const active = sections.find((section) => section.id === activeId) ?? sections[0];
   const midpoint = Math.ceil(active.items.length / 2);
   const columns = [active.items.slice(0, midpoint), active.items.slice(midpoint)];
 
-  const signatureDishes: SignatureDish[] = sections.flatMap((section) =>
+  const signatureDishes = sections.flatMap((section) =>
     section.items
       .filter((item): item is PricedItem & { photo: string } =>
         Boolean(item.photo)
       )
-      .map((item) => ({ ...item, sectionName: section.name }))
+      .map((item) => ({ item, sectionName: t(section.name) }))
   );
 
   return (
@@ -123,21 +129,25 @@ export default function MenuShowcase() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="From Our Kitchen"
-          title="The Full Menu"
-          description="Ground-from-scratch spices, overnight-simmered lentils, and breads baked to order — every dish adjusted to your palate."
+          eyebrow={t(UI.menu.eyebrow)}
+          title={t(UI.menu.title)}
+          description={t(UI.menu.description)}
         />
       </div>
 
       {/* Signature dishes slider */}
       <MotionSlider
-        label="Signature dishes"
+        label={t(UI.menu.signatureLabel)}
         speed={24}
         step={300}
         className="mb-14"
       >
-        {signatureDishes.map((dish) => (
-          <SignatureCard key={dish.name} dish={dish} />
+        {signatureDishes.map(({ item, sectionName }) => (
+          <SignatureCard
+            key={item.name.en}
+            dish={item}
+            sectionName={sectionName}
+          />
         ))}
       </MotionSlider>
 
@@ -145,7 +155,7 @@ export default function MenuShowcase() {
         {/* Category tabs with sliding indicator */}
         <div
           role="tablist"
-          aria-label="Menu categories"
+          aria-label={t(UI.menu.title)}
           className="mb-10 flex flex-wrap justify-center gap-2"
         >
           {sections.map((section) => {
@@ -170,7 +180,7 @@ export default function MenuShowcase() {
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
-                <span className="relative z-10">{section.name}</span>
+                <span className="relative z-10">{t(section.name)}</span>
               </button>
             );
           })}
@@ -204,7 +214,7 @@ export default function MenuShowcase() {
                   />
                 </div>
                 <figcaption className="px-5 py-4 text-xs leading-relaxed text-stone-400">
-                  {active.image.caption}
+                  {t(active.image.caption)}
                 </figcaption>
               </figure>
             )}
@@ -212,7 +222,7 @@ export default function MenuShowcase() {
             <div>
               {active.note && (
                 <p className="mb-6 rounded-2xl border border-saffron/20 bg-saffron/5 px-5 py-3.5 text-xs leading-relaxed text-stone-300 sm:text-sm">
-                  {active.note}
+                  {t(active.note)}
                 </p>
               )}
 
@@ -221,10 +231,10 @@ export default function MenuShowcase() {
                 <div className="mb-6 flex flex-wrap gap-2">
                   {curryChoices.map((choice) => (
                     <span
-                      key={choice}
+                      key={choice.en}
                       className="rounded-full border border-emerald-deep/40 bg-emerald-deep/10 px-3 py-1 text-[11px] font-medium text-emerald-soft"
                     >
-                      {choice}
+                      {t(choice)}
                     </span>
                   ))}
                 </div>
@@ -234,7 +244,7 @@ export default function MenuShowcase() {
                 {columns.map((columnItems, columnIndex) => (
                   <ul key={columnIndex}>
                     {columnItems.map((item) => (
-                      <MenuRow key={item.name} item={item} />
+                      <MenuRow key={item.name.en} item={item} />
                     ))}
                   </ul>
                 ))}
@@ -244,17 +254,14 @@ export default function MenuShowcase() {
         </AnimatePresence>
 
         <p className="mt-12 flex flex-col items-center justify-center gap-2 text-center text-sm text-stone-500 sm:flex-row sm:gap-6">
-          <span>
-            Spice levels fully customizable · Jain &amp; Halal preparations on
-            request
-          </span>
+          <span>{t(UI.menu.footerLine)}</span>
           <a
             href={metadata.tabelogMenuUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-saffron-glow transition-colors hover:text-saffron-bright"
           >
-            Full menu on Tabelog
+            {t(UI.menu.tabelogLink)}
             <ExternalLink className="size-3.5" aria-hidden="true" />
           </a>
         </p>

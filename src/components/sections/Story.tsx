@@ -2,32 +2,44 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Building2, Flame, HandHeart } from "lucide-react";
+import { Building2, Flame, HandHeart, type LucideIcon } from "lucide-react";
 
 import { RESTAURANT_DATA } from "@/data/restaurantData";
+import { UI, type L } from "@/data/i18n";
+import { useLang } from "@/components/LanguageProvider";
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
-const HIGHLIGHTS = [
+const HIGHLIGHTS: { icon: LucideIcon; title: L; text: L }[] = [
   {
     icon: Building2,
-    title: "A Fourth-Floor Surprise",
-    text: "Follow our street-level signboard up the Hijikata Building — an elevator ride away from one of Kyoto's warmest dining rooms.",
+    title: { en: "A Fourth-Floor Surprise", ja: "4階のサプライズ" },
+    text: {
+      en: "Follow our street-level signboard up the Hijikata Building — an elevator ride away from one of Kyoto's warmest dining rooms.",
+      ja: "通りの看板を目印にヒジカタビルへ。エレベーターを上がれば、京都で一番温かなダイニングが待っています。",
+    },
   },
   {
     icon: Flame,
-    title: "Your Palate, Your Spice",
-    text: "Every curry is adjusted to your exact spice level — from gentle and aromatic to boldly fiery, cooked fresh to order.",
+    title: { en: "Your Palate, Your Spice", ja: "あなた好みの辛さで" },
+    text: {
+      en: "Every curry is adjusted to your exact spice level — from gentle and aromatic to boldly fiery, cooked fresh to order.",
+      ja: "すべてのカレーはご注文ごとに作りたて。マイルドから激辛まで、お好みの辛さに調整します。",
+    },
   },
   {
     icon: HandHeart,
-    title: "Jain & Vegetarian Devotion",
-    text: "Dedicated Jain and vegetarian menus prepared with absolute care, honoring tradition without compromise.",
+    title: { en: "Jain & Vegetarian Devotion", ja: "ジャイン＆ベジタリアンへの想い" },
+    text: {
+      en: "Dedicated Jain and vegetarian menus prepared with absolute care, honoring tradition without compromise.",
+      ja: "伝統に忠実なジャイン・ベジタリアン専用メニューを、一切の妥協なく心を込めてご用意します。",
+    },
   },
-] as const;
+];
 
 export default function Story() {
   const { contact } = RESTAURANT_DATA;
+  const { t } = useLang();
 
   return (
     <section id="story" className="relative overflow-hidden py-20 md:py-28">
@@ -45,23 +57,20 @@ export default function Story() {
           transition={{ duration: 0.7, ease: easeOut }}
         >
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-saffron-bright">
-            Ambience &amp; Heritage
+            {t(UI.story.eyebrow)}
           </p>
           <h2 className="font-display text-3xl leading-tight text-cream sm:text-4xl md:text-5xl">
-            A Hidden Gem Above the{" "}
-            <span className="text-saffron-glow">Lanes of Kyoto</span>
+            {t(UI.story.titleLead)}{" "}
+            <span className="text-saffron-glow">{t(UI.story.titleAccent)}</span>
           </h2>
           <p className="mt-6 text-base leading-relaxed text-stone-400">
-            {contact.address.accessHint} Step inside and the city hum gives way
-            to the aroma of toasted cumin, simmering tomato gravies, and
-            fresh-baked rotis — the homey warmth of an Indian family kitchen in
-            the heart of Nakagyo Ward.
+            {t(contact.address.accessHint)} {t(UI.story.body)}
           </p>
 
           <ul className="mt-10 space-y-6">
             {HIGHLIGHTS.map((highlight, index) => (
               <motion.li
-                key={highlight.title}
+                key={highlight.title.en}
                 initial={{ opacity: 0, x: -24 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
@@ -76,10 +85,10 @@ export default function Story() {
                 </span>
                 <div>
                   <h3 className="font-display text-lg text-cream">
-                    {highlight.title}
+                    {t(highlight.title)}
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-stone-400">
-                    {highlight.text}
+                    {t(highlight.text)}
                   </p>
                 </div>
               </motion.li>
@@ -131,7 +140,7 @@ export default function Story() {
           >
             <p className="font-display text-2xl text-saffron-glow">4F</p>
             <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
-              Hijikata Building
+              {t(UI.story.chip4f)}
             </p>
           </motion.div>
         </div>
