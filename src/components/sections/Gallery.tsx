@@ -70,6 +70,7 @@ function PinnedFilmstrip({ photos }: { photos: GalleryImage[] }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [range, setRange] = useState(0);
+  const [sectionHeight, setSectionHeight] = useState<number | null>(null);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -77,21 +78,65 @@ function PinnedFilmstrip({ photos }: { photos: GalleryImage[] }) {
   });
 
   useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
     const measure = () => {
-      const track = trackRef.current;
-      if (!track) return;
-      setRange(Math.max(0, track.scrollWidth - window.innerWidth));
+      // Read computed padding-left to account for the large `pl-[max(...)]` used
+      // to center content on wide screens. The visible content width should
+      // exclude that left padding when computing the horizontal travel.
+      const style = window.getComputedStyle(track);
+      const padLeft = parseFloat(style.paddingLeft || "0") || 0;
+      // Visible content width (viewport minus left padding)
+      const visible = Math.max(0, window.innerWidth - padLeft);
+      // Ensure we don't over-report visible if track itself is narrower
+      const visibleClamped = Math.min(visible, track.clientWidth || visible);
+      const r = Math.max(0, track.scrollWidth - visibleClamped);
+      setRange(r);
+
+      // Desired section height = viewport + horizontal overflow
+      const h = window.innerHeight + r;
+      // Tighter cap: avoid taller than 2x viewport + 400px
+      const capped = Math.max(window.innerHeight, Math.min(h, window.innerHeight * 2 + 400));
+
+      // eslint-disable-next-line no-console
+      console.log("gallery: measure", {
+        trackScrollWidth: track.scrollWidth,
+        trackClientWidth: track.clientWidth,
+        padLeft,
+        visible,
+        visibleClamped,
+        range: r,
+        sectionHeight: h,
+        capped,
+      });
+
+      setSectionHeight(capped);
     };
+
+    // Initial measure and on resize
     measure();
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+
+    // Re-measure when track content changes (images load etc.)
+    const ro = new ResizeObserver(measure);
+    ro.observe(track);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
   }, []);
 
   const x = useTransform(scrollYProgress, [0, 1], [0, -range]);
   const hintOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
   return (
-    <div ref={sectionRef} className="relative h-[280vh]">
+    <div
+      ref={sectionRef}
+      className="relative"
+      style={sectionHeight ? { height: `${sectionHeight}px` } : undefined}
+    >
       <div className="sticky top-0 flex h-dvh flex-col justify-center overflow-hidden">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
@@ -174,7 +219,8 @@ export default function Gallery() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <section id="gallery" className="relative overflow-hidden">
+    // No overflow-hidden on this section — it would break the sticky pinning of the filmstrip.
+    <section id="gallery" className="relative">
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(21,128,61,0.06),transparent_55%)]"
